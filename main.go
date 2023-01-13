@@ -59,21 +59,36 @@ func getJSON() interface{} {
 
 func flattenJSON(data interface{}, parentKey string, flatJSON map[string]interface{}, keys []string) (map[string]interface{}, []string) {
 	switch data.(type) {
+	// if the data is a map of strings to interfaces
 	case map[string]interface{}:
+		// iterate through the map
 		for key, value := range data.(map[string]interface{}) {
+			// append the current key to the keys slice
 			keys = append(keys, parentKey+key)
+			// recursively call the flattenJSON function with 
+			// the value, updated parentKey, flatJSON and keys
 			flatJSON, keys = flattenJSON(value, parentKey+key+"_", flatJSON, keys)
 		}
+	// if the data is a slice of interfaces
 	case []interface{}:
+		// iterate through the slice
 		for i, value := range data.([]interface{}) {
+			// append the current index to the keys slice
 			keys = append(keys, parentKey+strconv.Itoa(i))
+			// recursively call the flattenJSON function with 
+			// the value, updated parentKey, flatJSON and keys
 			flatJSON, keys = flattenJSON(value, parentKey+strconv.Itoa(i)+"_", flatJSON, keys)
 		}
+	// if the data is neither a map nor 
+	// a slice, it is a leaf node
 	default:
+		// add the key-value pair to the flatJSON map
 		flatJSON[strings.TrimSuffix(parentKey, "_")] = data
 	}
+	// return the flatJSON and keys
 	return flatJSON, keys
 }
+
 
 func makeTabel() *tabwriter.Writer {
 	// see https://pkg.go.dev/text/tabwriter#NewWriter
