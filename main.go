@@ -4,58 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 )
 
 func main() {
-	json := getJSON()
-	result := make(map[string]interface{})
-	flattenJSON(json, "", result)
-	sortMapByKey(result)
-	
-	table := tabwriter.NewWriter(os.Stdout, 10, 8, 2, '\t', tabwriter.AlignRight)
-	fmt.Fprintln(table, "Key\tValue")
-	fmt.Fprintln(table, "---\t-----")
+	// couse table.Flush isn't stable
+	defer os.Stdout.Sync() 
 
-	for key, value := range result {
-		// fmt.Println(key, ":", value)
-		key = fmt.Sprintf("%v\t%v", key, value)
+	var data interface{} = getJSON()
+	table    := makeTabel()
+	flatJSON := make(map[string]interface{})
+	keys     := make([]string, 0)
+
+	flatJSON, keys = flattenJSON(data, "", flatJSON, keys)
+	for _, key := range keys {
+		// fmt.Println(key, ":", flatJSON[key])
+		if flatJSON[key] == nil {continue}
+		key = fmt.Sprintf("%v\t%v", key, flatJSON[key])
 		fmt.Fprintln(table, key)
 	}
 	table.Flush()
-}
-
-func flattenJSON(data interface{}, parentKey string, flatJSON map[string]interface{}) {
-	switch data.(type) {
-	case map[string]interface{}:
-		for key, value := range data.(map[string]interface{}) {
-			flattenJSON(value, parentKey+key+"_", flatJSON)
-		}
-	case []interface{}:
-		for i, value := range data.([]interface{}) {
-			flattenJSON(value, parentKey+strconv.Itoa(i)+"_", flatJSON)
-		}
-	default:
-		flatJSON[strings.TrimSuffix(parentKey, "_")] = data
-	}
-}
-
-func sortMapByKey(m map[string]interface{}) {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	sortedMap := make(map[string]interface{}, len(m))
-	for _, k := range keys {
-		sortedMap[k] = m[k]
-	}
-	for key, val := range sortedMap {
-		m[key] = val
-	}
 }
 
 func getJSON() interface{} {
@@ -86,3 +56,28 @@ func getJSON() interface{} {
 	return data
 }
 
+func flattenJSON(data interface{}, parentKey string, flatJSON map[string]interface{}, keys []string) (map[string]interface{}, []string) {
+	switch data.(type) {
+	case map[string]interface{}:
+		for key, value := range data.(map[string]interface{}) {
+			keys = append(keys, parentKey+key)
+			flatJSON, keys = flattenJSON(value, parentKey+key+"_", flatJSON, keys)
+		}
+	case []interface{}:
+		for i, value := range data.([]interface{}) {
+			keys = append(keys, parentKey+strconv.Itoa(i))
+			flatJSON, keys = flattenJSON(value, parentKey+strconv.Itoa(i)+"_", flatJSON, keys)
+		}
+	default:
+		flatJSON[strings.TrimSuffix(parentKey, "_")] = data
+	}
+	return flatJSON, keys
+}
+
+func makeTabel() *tabwriter.Writer {
+	table := tabwriter.NewWriter(os.Stdout, 10, 8, 2, '\t', tabwriter.AlignRight)
+	fmt.Fprintln(table, "Key\tValue")
+	fmt.Fprintln(table, "---\t-----")
+
+	return table
+}
