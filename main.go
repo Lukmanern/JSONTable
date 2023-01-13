@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// couse table.Flush isn't stable
-	defer os.Stdout.Sync() 
+	defer os.Stdout.Sync()
 
 	var data interface{} = getJSON()
 	table    := makeTabel()
@@ -36,7 +36,8 @@ func getJSON() interface{} {
 		"address": {
 			"street": "Main Street",
 			"city": "New York",
-			"state": "NY"
+			"state": "NY",
+			"postcode": "23410"
 		},
 		"phoneNumbers": [
 			{
@@ -75,6 +76,7 @@ func flattenJSON(data interface{}, parentKey string, flatJSON map[string]interfa
 }
 
 func makeTabel() *tabwriter.Writer {
+	// see https://pkg.go.dev/text/tabwriter#NewWriter
 	table := tabwriter.NewWriter(os.Stdout, 10, 8, 2, '\t', tabwriter.AlignRight)
 	fmt.Fprintln(table, "Key\tValue")
 	fmt.Fprintln(table, "---\t-----")
