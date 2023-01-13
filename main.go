@@ -1,30 +1,3 @@
-// package main
-
-// import (
-// 	"fmt"
-// 	"os"
-// 	"strconv"
-// 	"text/tabwriter"
-// )
-
-// func main() {
-// 	m := map[string]int{
-// 		"item1": 12,
-// 		"item2": 23,
-// 		"item3": 34,
-// 		"item4": 45,
-// 	}
-
-// 	w := tabwriter.NewWriter(os.Stdout, 0, 20, 20, '\t', tabwriter.AlignRight)
-// 	fmt.Fprintln(w, "Key\tValue")
-// 	fmt.Fprintln(w, "---\t-----")
-
-// 	for key, val := range m {
-// 		fmt.Fprintln(w, key+"\t"+strconv.Itoa(val))
-// 	}
-// 	w.Flush()
-// }
-
 package main
 
 import (
@@ -36,15 +9,6 @@ import (
 	"strings"
 	"text/tabwriter"
 )
-
-// 	w := tabwriter.NewWriter(os.Stdout, 0, 20, 20, '\t', tabwriter.AlignRight)
-// 	fmt.Fprintln(w, "Key\tValue")
-// 	fmt.Fprintln(w, "---\t-----")
-
-// 	for key, val := range m {
-// 		fmt.Fprintln(w, key+"\t"+strconv.Itoa(val))
-// 	}
-// 	w.Flush()
 
 func main() {
 	json := getJSON()
