@@ -13,7 +13,7 @@ func main() {
 	// couse table.Flush isn't stable
 	defer os.Stdout.Sync()
 
-	var data interface{} = getJSON()
+	data 	   := getJSON()
 	table    := makeTabel()
 	flatJSON := make(map[string]interface{})
 	keys     := make([]string, 0)
@@ -21,6 +21,7 @@ func main() {
 	flatJSON, keys = flattenJSON(data, "", flatJSON, keys)
 	for _, key := range keys {
 		// fmt.Println(key, ":", flatJSON[key])
+		// when null value, skip
 		if flatJSON[key] == nil {continue}
 		key = fmt.Sprintf("%v\t%v", key, flatJSON[key])
 		fmt.Fprintln(table, key)
