@@ -10,15 +10,12 @@ import (
 )
 
 func main() {
-	// couse table.Flush isn't stable
-	defer os.Stdout.Sync()
-
 	data 	   := getJSON()
 	table    := makeTabel()
 	flatJSON := make(map[string]interface{})
 	keys     := make([]string, 0)
 
-	flatJSON, keys = flattenJSON(data, "", flatJSON, keys)
+	flatJSON, keys = flattenJSON(data, "  ", flatJSON, keys)
 	for _, key := range keys {
 		// fmt.Println(key, ":", flatJSON[key])
 		// when null value, skip
@@ -26,6 +23,8 @@ func main() {
 		key = fmt.Sprintf("%v\t%v", key, flatJSON[key])
 		fmt.Fprintln(table, key)
 	}
+	// couse table.Flush isn't stable
+	// os.Stdout.Sync()
 	table.Flush()
 }
 
@@ -94,8 +93,8 @@ func flattenJSON(data interface{}, parentKey string, flatJSON map[string]interfa
 func makeTabel() *tabwriter.Writer {
 	// see https://pkg.go.dev/text/tabwriter#NewWriter
 	table := tabwriter.NewWriter(os.Stdout, 10, 8, 2, '\t', tabwriter.AlignRight)
-	fmt.Fprintln(table, "Key\tValue")
-	fmt.Fprintln(table, "---\t-----")
+	fmt.Fprintln(table, "  Key\tValue")
+	fmt.Fprintln(table, "  ---\t-----")
 
 	return table
 }
