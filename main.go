@@ -10,10 +10,12 @@ import (
 	"text/tabwriter"
 )
 
+type jsonFlat map[string]interface{}
+
 func main() {
 	data 	   := getJSON()
 	table    := makeTabel()
-	flatJSON := make(map[string]interface{})
+	flatJSON := make(jsonFlat)
 	keys     := make([]string, 0)
 
 	flatJSON, keys = flattenJSON(data, "  ", flatJSON, keys)
@@ -63,12 +65,12 @@ func getJSON() interface{} {
 	return data
 }
 
-func flattenJSON(data interface{}, parentKey string, flatJSON map[string]interface{}, keys []string) (map[string]interface{}, []string) {
+func flattenJSON(data interface{}, parentKey string, flatJSON jsonFlat, keys []string) (jsonFlat, []string) {
 	switch data.(type) {
 	// if the data is a map of strings to interfaces
-	case map[string]interface{}:
+	case jsonFlat:
 		// iterate through the map
-		for key, value := range data.(map[string]interface{}) {
+		for key, value := range data.(jsonFlat) {
 			// append the current key to the keys slice
 			keys = append(keys, parentKey+key)
 			// recursively call the flattenJSON function with 
