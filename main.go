@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -19,9 +20,10 @@ func main() {
 	for _, key := range keys {
 		// fmt.Println(key, ":", flatJSON[key])
 		// when null value, skip
-		if flatJSON[key] == nil {continue}
-		key = fmt.Sprintf("%v\t%v", key, flatJSON[key])
-		fmt.Fprintln(table, key)
+		if _, ok := flatJSON[key]; ok {
+			key = fmt.Sprintf("%v\t%v", key, flatJSON[key])
+			fmt.Fprintln(table, key)
+		}
 	}
 	// couse table.Flush isn't stable
 	// os.Stdout.Sync()
@@ -52,7 +54,11 @@ func getJSON() interface{} {
 	}`
 
 	var data interface{}
-	json.Unmarshal([]byte(jsonData), &data)
+	err := json.Unmarshal([]byte(jsonData), &data)
+	if err != nil {
+		log.Fatal("Error in JSON, please check the struture.")
+		return data
+	}
 
 	return data
 }
