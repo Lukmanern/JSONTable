@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -54,37 +55,36 @@ func parseJSON() interface{} {
 	return data
 }
 
-func flattenMap(data interface{}, parentKey string, flattenJSON FlattenedJSON, keys []string) (FlattenedJSON, []string) {
-	switch data.(type) {
-	// if the data is a map of strings to interfaces
-	case map[string]interface{}:
+func flattenMap(data interface{}, parentKey string, flatJSON FlattenedJSON, keys []string) (FlattenedJSON, []string) {
+	// type of data-var
+	t := reflect.TypeOf(data).Kind()
+	if t == reflect.Map {
 		// iterate through the map
 		for key, value := range data.(map[string]interface{}) {
 			// append the current key to the keys slice
 			keys = append(keys, parentKey+key)
-			// recursively call the flattenJSON function with 
+			// recursively call the flatJSON function with 
 			// the value, updated parentKey, flatJSON and keys
-			flattenJSON, keys = flattenMap(value, parentKey+key+"_", flattenJSON, keys)
+			flatJSON, keys = flattenMap(value, parentKey+key+"_", flatJSON, keys)
 		}
-	// if the data is a slice of interfaces
-	case []interface{}:
+	} else if t == reflect.Slice {
 		// iterate through the slice
-	
 		for i, value := range data.([]interface{}) {
 			// append the current index to the keys slice
 			keys = append(keys, parentKey+strconv.Itoa(i))
-			// recursively call the flattenJSON function with 
+			// recursively call the flatJSON function with 
 			// the value, updated parentKey, flatJSON and keys
-			flattenJSON, keys = flattenMap(value, parentKey+strconv.Itoa(i)+"_", flattenJSON, keys)
+			flatJSON, keys = flattenMap(value, parentKey+strconv.Itoa(i)+"_", flatJSON, keys)
 		}
-	// if the data is neither a map nor 
-	// a slice, it is a leaf node
-	default:
-		// add the key-value pair to the flattenJSON map
-		flattenJSON[strings.TrimSuffix(parentKey, "_")] = data
+	} else {
+		// if the data is neither a map nor 
+		// a slice, it is a leaf node
+		// add the key-value pair to the flatJSON map
+		flatJSON[strings.TrimSuffix(parentKey, "_")] = data
 	}
-	// return the flattenJSON and keys
-	return flattenJSON, keys
+
+	// return the flatJSON and keys
+	return flatJSON, keys
 }
 
 func makeTable() *tabwriter.Writer {
