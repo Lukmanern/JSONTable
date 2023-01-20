@@ -10,29 +10,29 @@ import (
 	"text/tabwriter"
 )
 
-type jsonFlat map[string]interface{}
+type FlattenedJSON map[string]interface{}
 
 func main() {
-	data 	   := getJSON()
-	table    := makeTabel()
-	flatJSON := make(jsonFlat)
-	keys     := make([]string, 0)
+	rawJSON 	  := parseJSON()
+	tabWriter 	  := makeTable()
+	flattenedJSON := make(FlattenedJSON, 0)
+	jsonKeys      := make([]string, 0)
 
-	flatJSON, keys = flattenJSON(data, "  ", flatJSON, keys)
-	for _, key := range keys {
-		// fmt.Println(key, ":", flatJSON[key])
+	flattenedJSON, jsonKeys = flattenMap(rawJSON, "  ", flattenedJSON, jsonKeys)
+	for _, key := range jsonKeys {
+		// fmt.Println(key, ":", flattenedJSON[key])
 		// when null value, skip
-		if _, ok := flatJSON[key]; ok {
-			key = fmt.Sprintf("%v\t%v", key, flatJSON[key])
-			fmt.Fprintln(table, key)
+		if _, ok := flattenedJSON[key]; ok {
+			key = fmt.Sprintf("%v\t%v", key, flattenedJSON[key])
+			fmt.Fprintln(tabWriter, key)
 		}
 	}
 	// couse table.Flush isn't stable
-	// os.Stdout.Sync()
-	table.Flush()
+	os.Stdout.Sync()
+	tabWriter.Flush()
 }
 
-func getJSON() interface{} {
+func parseJSON() interface{} {
 	jsonData := `
 	{
 		"name": "John Smith",
@@ -65,40 +65,40 @@ func getJSON() interface{} {
 	return data
 }
 
-func flattenJSON(data interface{}, parentKey string, flatJSON jsonFlat, keys []string) (jsonFlat, []string) {
+func flattenMap(data interface{}, parentKey string, flattenJSON FlattenedJSON, keys []string) (FlattenedJSON, []string) {
 	switch data.(type) {
 	// if the data is a map of strings to interfaces
-	case jsonFlat:
+	case map[string]interface{}:
 		// iterate through the map
-		for key, value := range data.(jsonFlat) {
+		for key, value := range data.(map[string]interface{}) {
 			// append the current key to the keys slice
 			keys = append(keys, parentKey+key)
 			// recursively call the flattenJSON function with 
 			// the value, updated parentKey, flatJSON and keys
-			flatJSON, keys = flattenJSON(value, parentKey+key+"_", flatJSON, keys)
+			flattenJSON, keys = flattenMap(value, parentKey+key+"_", flattenJSON, keys)
 		}
 	// if the data is a slice of interfaces
 	case []interface{}:
 		// iterate through the slice
+	
 		for i, value := range data.([]interface{}) {
 			// append the current index to the keys slice
 			keys = append(keys, parentKey+strconv.Itoa(i))
 			// recursively call the flattenJSON function with 
 			// the value, updated parentKey, flatJSON and keys
-			flatJSON, keys = flattenJSON(value, parentKey+strconv.Itoa(i)+"_", flatJSON, keys)
+			flattenJSON, keys = flattenMap(value, parentKey+strconv.Itoa(i)+"_", flattenJSON, keys)
 		}
 	// if the data is neither a map nor 
 	// a slice, it is a leaf node
 	default:
-		// add the key-value pair to the flatJSON map
-		flatJSON[strings.TrimSuffix(parentKey, "_")] = data
+		// add the key-value pair to the flattenJSON map
+		flattenJSON[strings.TrimSuffix(parentKey, "_")] = data
 	}
-	// return the flatJSON and keys
-	return flatJSON, keys
+	// return the flattenJSON and keys
+	return flattenJSON, keys
 }
 
-
-func makeTabel() *tabwriter.Writer {
+func makeTable() *tabwriter.Writer {
 	// see https://pkg.go.dev/text/tabwriter#NewWriter
 	table := tabwriter.NewWriter(os.Stdout, 10, 8, 2, '\t', tabwriter.AlignRight)
 	fmt.Fprintln(table, "  Key\tValue")
