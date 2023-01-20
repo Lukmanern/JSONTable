@@ -13,23 +13,12 @@ import (
 type FlattenedJSON map[string]interface{}
 
 func main() {
-	rawJSON 	  := parseJSON()
-	tabWriter 	  := makeTable()
-	flattenedJSON := make(FlattenedJSON, 0)
-	jsonKeys      := make([]string, 0)
+	rawJSON   := parseJSON()
+	flatJSON  := make(FlattenedJSON, 0)
+	jsonKeys  := make([]string, 0)
+	flatJSON, jsonKeys = flattenMap(rawJSON, "  ", flatJSON, jsonKeys)
 
-	flattenedJSON, jsonKeys = flattenMap(rawJSON, "  ", flattenedJSON, jsonKeys)
-	for _, key := range jsonKeys {
-		// fmt.Println(key, ":", flattenedJSON[key])
-		// when null value, skip
-		if _, ok := flattenedJSON[key]; ok {
-			key = fmt.Sprintf("%v\t%v", key, flattenedJSON[key])
-			fmt.Fprintln(tabWriter, key)
-		}
-	}
-	// couse table.Flush isn't stable
-	os.Stdout.Sync()
-	tabWriter.Flush()
+	showTable(rawJSON, jsonKeys, flatJSON)
 }
 
 func parseJSON() interface{} {
@@ -105,4 +94,20 @@ func makeTable() *tabwriter.Writer {
 	fmt.Fprintln(table, "  ---\t-----")
 
 	return table
+}
+
+func showTable(rawJSON interface{}, jsonKeys []string, flatJSON FlattenedJSON) {
+	tabWriter := makeTable()
+
+	for _, key := range jsonKeys {
+		// fmt.Println(key, ":", flatJSON[key])
+		// when null value, skip
+		if _, ok := flatJSON[key]; ok {
+			key = fmt.Sprintf("%v\t%v", key, flatJSON[key])
+			fmt.Fprintln(tabWriter, key)
+		}
+	}
+	// couse table.Flush isn't stable
+	os.Stdout.Sync()
+	tabWriter.Flush()
 }
