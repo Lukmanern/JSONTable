@@ -13,6 +13,12 @@ import (
 
 type FlattenedJSON map[string]interface{}
 
+type FlatteningArgs struct {
+	FlattenedJSON FlattenedJSON
+	Keys          []string
+	Prefix        string
+}
+
 func main() {
 	rawJSON   := parseJSON()
 	flatJSON  := make(FlattenedJSON, 0)
@@ -57,8 +63,8 @@ func parseJSON() interface{} {
 
 func flattenMap(data interface{}, parentKey string, flatJSON FlattenedJSON, keys []string) (FlattenedJSON, []string) {
 	// type of data-var
-	t := reflect.TypeOf(data).Kind()
-	if t == reflect.Map {
+	dataType := reflect.TypeOf(data).Kind()
+	if dataType == reflect.Map {
 		// iterate through the map
 		for key, value := range data.(map[string]interface{}) {
 			// append the current key to the keys slice
@@ -67,7 +73,7 @@ func flattenMap(data interface{}, parentKey string, flatJSON FlattenedJSON, keys
 			// the value, updated parentKey, flatJSON and keys
 			flatJSON, keys = flattenMap(value, parentKey+key+"_", flatJSON, keys)
 		}
-	} else if t == reflect.Slice {
+	} else if dataType == reflect.Slice {
 		// iterate through the slice
 		for i, value := range data.([]interface{}) {
 			// append the current index to the keys slice
