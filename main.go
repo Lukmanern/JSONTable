@@ -14,18 +14,21 @@ import (
 type FlattenedJSON map[string]interface{}
 
 type FlatteningArgs struct {
-	FlattenedJSON FlattenedJSON
-	Keys          []string
-	Prefix        string
+	flatJSON 	FlattenedJSON
+	Keys        []string
+	parentKey   string
 }
 
 func main() {
-	rawJSON   := parseJSON()
-	flatJSON  := make(FlattenedJSON, 0)
-	jsonKeys  := make([]string, 0)
-	flatJSON, jsonKeys = flattenMap(rawJSON, "  ", flatJSON, jsonKeys)
+	mainArgs := FlatteningArgs{
+		flatJSON: make(FlattenedJSON, 0),
+		Keys: make([]string, 0),
+		parentKey: "  ",
+	}
 
-	showTable(rawJSON, jsonKeys, flatJSON)
+	flatJSON, jsonKeys := flattenMap(parseJSON(), mainArgs)
+
+	showTable(jsonKeys, flatJSON)
 }
 
 func parseJSON() interface{} {
@@ -61,38 +64,51 @@ func parseJSON() interface{} {
 	return data
 }
 
-func flattenMap(data interface{}, parentKey string, flatJSON FlattenedJSON, keys []string) (FlattenedJSON, []string) {
+func flattenMap(data interface{}, mainArgs FlatteningArgs) (FlattenedJSON, []string) {
 	// type of data-var
 	dataType := reflect.TypeOf(data).Kind()
 	if dataType == reflect.Map {
 		// iterate through the map
 		for key, value := range data.(map[string]interface{}) {
 			// append the current key to the keys slice
-			keys = append(keys, parentKey+key)
-			// recursively call the flatJSON function with 
-			// the value, updated parentKey, flatJSON and keys
-			flatJSON, keys = flattenMap(value, parentKey+key+"_", flatJSON, keys)
+			mainArgs.Keys = append(mainArgs.Keys, mainArgs.parentKey+key)
+			// make new args
+			newMainArgs := FlatteningArgs{
+				flatJSON: mainArgs.flatJSON,
+				Keys: mainArgs.Keys,
+				parentKey: mainArgs.parentKey+key+"_",
+			}
+			// recursively call the mainArgs.flatJSON function with 
+			// the value, updated mainArgs.parentKey, mainArgs.flatJSON and mainArgs.Keys
+			mainArgs.flatJSON, mainArgs.Keys = flattenMap(value, newMainArgs)
 		}
 	} else if dataType == reflect.Slice {
 		// iterate through the slice
 		for i, value := range data.([]interface{}) {
-			// append the current index to the keys slice
-			keys = append(keys, parentKey+strconv.Itoa(i))
-			// recursively call the flatJSON function with 
-			// the value, updated parentKey, flatJSON and keys
-			flatJSON, keys = flattenMap(value, parentKey+strconv.Itoa(i)+"_", flatJSON, keys)
+			// append the current index to the mainArgs.Keys slice
+			mainArgs.Keys = append(mainArgs.Keys, mainArgs.parentKey+strconv.Itoa(i))
+			// make new args
+			newMainArgs := FlatteningArgs{
+				flatJSON: mainArgs.flatJSON,
+				Keys: mainArgs.Keys,
+				parentKey: mainArgs.parentKey+strconv.Itoa(i)+"_",
+			}
+			// recursively call the mainArgs.flatJSON function with 
+			// the value, updated mainArgs.parentKey, mainArgs.flatJSON and mainArgs.Keys
+			mainArgs.flatJSON, mainArgs.Keys = flattenMap(value, newMainArgs)
 		}
 	} else {
 		// if the data is neither a map nor 
 		// a slice, it is a leaf node
-		// add the key-value pair to the flatJSON map
-		flatJSON[strings.TrimSuffix(parentKey, "_")] = data
+		// add the key-value pair to the mainArgs.flatJSON map
+		mainArgs.flatJSON[strings.TrimSuffix(mainArgs.parentKey, "_")] = data
 	}
 
-	// return the flatJSON and keys
-	return flatJSON, keys
+	// return the mainArgs.flatJSON and mainArgs.Keys
+	return mainArgs.flatJSON, mainArgs.Keys
 }
 
+// table structure
 func makeTable() *tabwriter.Writer {
 	// see https://pkg.go.dev/text/tabwriter#NewWriter
 	table := tabwriter.NewWriter(os.Stdout, 10, 8, 2, '\t', tabwriter.AlignRight)
@@ -102,9 +118,8 @@ func makeTable() *tabwriter.Writer {
 	return table
 }
 
-func showTable(rawJSON interface{}, jsonKeys []string, flatJSON FlattenedJSON) {
+func showTable(jsonKeys []string, flatJSON FlattenedJSON) {
 	tabWriter := makeTable()
-
 	for _, key := range jsonKeys {
 		// fmt.Println(key, ":", flatJSON[key])
 		// when null value, skip
@@ -113,6 +128,7 @@ func showTable(rawJSON interface{}, jsonKeys []string, flatJSON FlattenedJSON) {
 			fmt.Fprintln(tabWriter, key)
 		}
 	}
+	
 	// couse table.Flush isn't stable
 	os.Stdout.Sync()
 	tabWriter.Flush()
