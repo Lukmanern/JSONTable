@@ -25,9 +25,7 @@ func main() {
 		Keys: make([]string, 0),
 		parentKey: "  ",
 	}
-
 	flatJSON, jsonKeys := flattenMap(parseJSON(), mainArgs)
-
 	showTable(jsonKeys, flatJSON)
 }
 
@@ -57,7 +55,7 @@ func parseJSON() interface{} {
 	var data interface{}
 	err := json.Unmarshal([]byte(jsonData), &data)
 	if err != nil {
-		log.Fatal("Error in JSON, please check the struture.")
+		log.Fatal("Error : JSON. Please check the struture.")
 		return data
 	}
 
@@ -78,8 +76,9 @@ func flattenMap(data interface{}, mainArgs FlatteningArgs) (FlattenedJSON, []str
 				Keys: mainArgs.Keys,
 				parentKey: mainArgs.parentKey+key+"_",
 			}
-			// recursively call the mainArgs.flatJSON function with 
-			// the value, updated mainArgs.parentKey, mainArgs.flatJSON and mainArgs.Keys
+			// recursively call the flattenMap function with 
+			// the value, updated mainArgs.parentKey, 
+			// mainArgs.flatJSON and mainArgs.Keys
 			mainArgs.flatJSON, mainArgs.Keys = flattenMap(value, newMainArgs)
 		}
 	} else if dataType == reflect.Slice {
@@ -93,14 +92,16 @@ func flattenMap(data interface{}, mainArgs FlatteningArgs) (FlattenedJSON, []str
 				Keys: mainArgs.Keys,
 				parentKey: mainArgs.parentKey+strconv.Itoa(i)+"_",
 			}
-			// recursively call the mainArgs.flatJSON function with 
-			// the value, updated mainArgs.parentKey, mainArgs.flatJSON and mainArgs.Keys
+			// recursively call the flattenMap function with 
+			// the value, updated mainArgs.parentKey, 
+			// mainArgs.flatJSON and mainArgs.Keys
 			mainArgs.flatJSON, mainArgs.Keys = flattenMap(value, newMainArgs)
 		}
 	} else {
 		// if the data is neither a map nor 
 		// a slice, it is a leaf node
-		// add the key-value pair to the mainArgs.flatJSON map
+		// add the key-value pair 
+		// to the mainArgs.flatJSON map
 		mainArgs.flatJSON[strings.TrimSuffix(mainArgs.parentKey, "_")] = data
 	}
 
@@ -121,7 +122,6 @@ func makeTable() *tabwriter.Writer {
 func showTable(jsonKeys []string, flatJSON FlattenedJSON) {
 	tabWriter := makeTable()
 	for _, key := range jsonKeys {
-		// fmt.Println(key, ":", flatJSON[key])
 		// when null value, skip
 		if _, ok := flatJSON[key]; ok {
 			key = fmt.Sprintf("%v\t%v", key, flatJSON[key])
@@ -129,7 +129,7 @@ func showTable(jsonKeys []string, flatJSON FlattenedJSON) {
 		}
 	}
 	
-	// couse table.Flush isn't stable
+	// Sync() for table.Flush (isn't stable)
 	os.Stdout.Sync()
 	tabWriter.Flush()
 }
