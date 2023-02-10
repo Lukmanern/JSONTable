@@ -62,51 +62,51 @@ func parseJSON() interface{} {
 	return data
 }
 
-func flattenMap(data interface{}, mainArgs FlatteningArgs) (FlattenedJSON, []string) {
+func flattenMap(data interface{}, args FlatteningArgs) (FlattenedJSON, []string) {
 	// type of data-var
 	dataType := reflect.TypeOf(data).Kind()
 	if dataType == reflect.Map {
 		// iterate through the map
 		for key, value := range data.(map[string]interface{}) {
 			// append the current key to the keys slice
-			mainArgs.Keys = append(mainArgs.Keys, mainArgs.parentKey+key)
+			args.Keys = append(args.Keys, args.parentKey+key)
 			// make new args
-			newMainArgs := FlatteningArgs{
-				flatJSON: mainArgs.flatJSON,
-				Keys: mainArgs.Keys,
-				parentKey: mainArgs.parentKey+key+"_",
+			newArgs := FlatteningArgs{
+				flatJSON: args.flatJSON,
+				Keys: args.Keys,
+				parentKey: args.parentKey+key+"_",
 			}
 			// recursively call the flattenMap function with 
-			// the value, updated mainArgs.parentKey, 
-			// mainArgs.flatJSON and mainArgs.Keys
-			mainArgs.flatJSON, mainArgs.Keys = flattenMap(value, newMainArgs)
+			// the value, updated args.parentKey, 
+			// args.flatJSON and args.Keys
+			args.flatJSON, args.Keys = flattenMap(value, newArgs)
 		}
 	} else if dataType == reflect.Slice {
 		// iterate through the slice
 		for i, value := range data.([]interface{}) {
-			// append the current index to the mainArgs.Keys slice
-			mainArgs.Keys = append(mainArgs.Keys, mainArgs.parentKey+strconv.Itoa(i))
+			// append the current index to the args.Keys slice
+			args.Keys = append(args.Keys, args.parentKey+strconv.Itoa(i))
 			// make new args
-			newMainArgs := FlatteningArgs{
-				flatJSON: mainArgs.flatJSON,
-				Keys: mainArgs.Keys,
-				parentKey: mainArgs.parentKey+strconv.Itoa(i)+"_",
+			newArgs := FlatteningArgs{
+				flatJSON: args.flatJSON,
+				Keys: args.Keys,
+				parentKey: args.parentKey+strconv.Itoa(i)+"_",
 			}
 			// recursively call the flattenMap function with 
-			// the value, updated mainArgs.parentKey, 
-			// mainArgs.flatJSON and mainArgs.Keys
-			mainArgs.flatJSON, mainArgs.Keys = flattenMap(value, newMainArgs)
+			// the value, updated args.parentKey, 
+			// args.flatJSON and args.Keys
+			args.flatJSON, args.Keys = flattenMap(value, newArgs)
 		}
 	} else {
 		// if the data is neither a map nor 
 		// a slice, it is a leaf node
 		// add the key-value pair 
-		// to the mainArgs.flatJSON map
-		mainArgs.flatJSON[strings.TrimSuffix(mainArgs.parentKey, "_")] = data
+		// to the args.flatJSON map
+		args.flatJSON[strings.TrimSuffix(args.parentKey, "_")] = data
 	}
 
-	// return the mainArgs.flatJSON and mainArgs.Keys
-	return mainArgs.flatJSON, mainArgs.Keys
+	// return the args.flatJSON and args.Keys
+	return args.flatJSON, args.Keys
 }
 
 // table structure
