@@ -29,6 +29,8 @@ func main() {
 	showTable(jsonKeys, flatJSON)
 }
 
+// parseJSON func used for 
+// get and parse JSON
 func parseJSON() interface{} {
 	jsonData := `
 	{
@@ -52,14 +54,14 @@ func parseJSON() interface{} {
 		]
 	}`
 
-	var data interface{}
-	err := json.Unmarshal([]byte(jsonData), &data)
+	var flatJSON interface{}
+	err := json.Unmarshal([]byte(jsonData), &flatJSON)
 	if err != nil {
 		log.Fatal("Error : JSON. Please check the struture.")
-		return data
+		return flatJSON
 	}
 
-	return data
+	return flatJSON
 }
 
 func flattenMap(data interface{}, args FlatteningArgs) (FlattenedJSON, []string) {
